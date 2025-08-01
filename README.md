@@ -77,6 +77,11 @@ Este projeto é open-source e está disponível para uso livre.
 
 Para dúvidas ou sugestões, entre em contato com o desenvolvedor.
 
+## Desenvolvedor
+| [<img loading="lazy" src="https://github.com/user-attachments/assets/67049ae6-daaf-4374-955c-c96e04310e6e?v=4" width=115><br><sub>Nicolas David</sub>](https://github.com/nicolasdavid-datascience) |
+| :---: |
+
+
 ---
 
 Desenvolvido com ❤️ para ajudar motoristas de Uber a gerenciarem melhor seus negócios!
