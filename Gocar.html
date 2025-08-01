@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <!-- Meta tags básicas -->
+    <meta charset="UTF-8" /> <!-- Define a codificação de caracteres como UTF-8 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" /> <!-- Configura viewport para responsividade -->
+    
+    <!-- Título da página -->
+    <title>Controle Combustível Uber</title>
+    
+    <!-- Importação da biblioteca Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Estilos CSS -->
+    <style>
+        /* Variáveis CSS para cores e temas */
+        :root {
+            --bg: #f5f5f5; /* Cor de fundo padrão */
+            --card-bg: #fff; /* Cor de fundo dos cards */
+            --text: #333; /* Cor do texto principal */
+            --input-border: #ccc; /* Cor da borda dos inputs */
+            --dark-bg: #2e2e2e; /* Cor de fundo para modo escuro */
+            --dark-card: #3a3a3a; /* Cor dos cards no modo escuro */
+            --dark-text: #eee; /* Cor do texto no modo escuro */
+            --dark-input-border: #555; /* Cor da borda dos inputs no modo escuro */
+            --red: #dc3545; /* Cor vermelha para erros/destaques */
+            --primary: #007bff; /* Cor primária (azul) */
+            --success: #28a745; /* Cor de sucesso (verde) */
+            --info: #17a2b8; /* Cor informativa (azul claro) */
+            --info-darker: #118c9f; /* Versão mais escura da cor info */
+            --progress-bg: #e9ecef; /* Cor de fundo da barra de progresso */
+            --grey: #6c757d; /* Cor cinza */
+        }
+
+        /* Estilos gerais do corpo da página */
+        body {
+            margin: 0; /* Remove margens padrão */
+            padding: 20px; /* Adiciona padding interno */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Define fonte padrão */
+            background-color: var(--bg); /* Usa variável para cor de fundo */
+            color: var(--text); /* Usa variável para cor do texto */
+            transition: background-color 0.3s, color 0.3s; /* Transição suave para tema escuro */
+            display: flex; /* Ativa flexbox */
+            justify-content: center; /* Centraliza conteúdo horizontalmente */
+        }
+
+        /* Estilos para o modo escuro */
+        body.dark {
+            background-color: var(--dark-bg); /* Cor de fundo escura */
+            color: var(--dark-text); /* Cor do texto clara */
+        }
+
+        /* Container principal */
+        .container {
+            max-width: 460px; /* Largura máxima */
+            width: 100%; /* Ocupa 100% da largura disponível */
+        }
+
+        /* Estilo do título principal */
+        h1 {
+            text-align: center; /* Centraliza o texto */
+            margin-bottom: 12px; /* Espaçamento inferior */
+        }
+
+        /* Container dos botões superiores */
+        .top-buttons {
+            display: flex; /* Layout flexível */
+            gap: 12px; /* Espaço entre elementos */
+            margin-bottom: 18px; /* Espaçamento inferior */
+        }
+
+        /* Estilo dos botões superiores */
+        .top-buttons button {
+            flex: 1; /* Distribui espaço igualmente */
+            padding: 10px 18px; /* Espaçamento interno */
+            border: none; /* Remove borda */
+            border-radius: 8px; /* Bordas arredondadas */
+            font-weight: 600; /* Peso da fonte */
+            cursor: pointer; /* Cursor de ponteiro */
+            font-size: 16px; /* Tamanho da fonte */
+            background-color: var(--primary); /* Cor de fundo */
+            color: white; /* Cor do texto */
+            transition: background-color 0.3s; /* Transição suave */
+        }
+
+        /* Estilo para botões ativos ou com hover */
+        .top-buttons button.active,
+        .top-buttons button:hover {
+            background-color: var(--success); /* Muda cor ao passar mouse */
+        }
+
+        /* Botão de alternar tema escuro */
+        .toggle-dark {
+            position: absolute; /* Posicionamento absoluto */
+            top: 20px; /* Distância do topo */
+            right: 20px; /* Distância da direita */
+            padding: 6px 12px; /* Espaçamento interno */
+            border: none; /* Remove borda */
+            background-color: var(--primary); /* Cor de fundo */
+            color: white; /* Cor do texto */
+            border-radius: 6px; /* Bordas arredondadas */
+            cursor: pointer; /* Cursor de ponteiro */
+            z-index: 10; /* Camada superior */
+        }
+
+        /* Estilo base para cards */
+        .card {
+            background-color: var(--card-bg); /* Cor de fundo */
+            border-radius: 12px; /* Bordas arredondadas */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Sombra sutil */
+            padding: 20px; /* Espaçamento interno */
+            margin-bottom: 15px; /* Espaçamento inferior */
+            position: relative; /* Posicionamento relativo */
+            transition: background-color 0.3s; /* Transição suave */
+        }
+
+        /* Estilo para cards agrupados por data */
+        .date-group .card {
+            border-top: 2px solid var(--info); /* Borda superior */
+            border-radius: 0; /* Remove bordas arredondadas */
+            margin-bottom: 0; /* Remove espaçamento */
+            padding-top: 15px; /* Ajuste de espaçamento */
+            padding-bottom: 15px; /* Ajuste de espaçamento */
+        }
+
+        /* Estilo para o primeiro card do grupo */
+        .date-group .card:first-of-type {
+            border-top-left-radius: 12px; /* Borda superior esquerda */
+            border-top-right-radius: 12px; /* Borda superior direita */
+        }
+
+        /* Estilo para o último card do grupo */
+        .date-group .card:last-of-type {
+            border-bottom-left-radius: 12px; /* Borda inferior esquerda */
+            border-bottom-right-radius: 12px; /* Borda inferior direita */
+            margin-bottom: 20px; /* Espaçamento inferior */
+        }
+
+        /* Ajuste de cor para cards no modo escuro */
+        body.dark .card {
+            background-color: var(--dark-card); /* Cor de fundo escura */
+        }
+
+        /* Estilo para labels */
+        label {
+            display: block; /* Exibe como bloco */
+            margin-bottom: 8px; /* Espaçamento inferior */
+            font-weight: 600; /* Peso da fonte */
+        }
+
+        /* Estilo para inputs numéricos e de data */
+        input[type='number'],
+        input[type='date'] {
+            width: 100%; /* Largura total */
+            padding: 12px; /* Espaçamento interno */
+            border-radius: 6px; /* Bordas arredondadas */
+            border: 1px solid var(--input-border); /* Borda */
+            margin-bottom: 16px; /* Espaçamento inferior */
+            box-sizing: border-box; /* Modelo de caixa */
+            transition: border-color 0.3s, background-color 0.3s, color 0.3s; /* Transições */
+            font-size: 16px; /* Tamanho da fonte */
+        }
+
+        /* Ajustes para inputs no modo escuro */
+        body.dark input {
+            border-color: var(--dark-input-border); /* Cor da borda */
+            background-color: var(--dark-card); /* Cor de fundo */
+            color: var(--dark-text); /* Cor do texto */
+        }
+
+        /* Estilo para inputs inválidos */
+        input.invalid {
+            border-color: var(--red) !important; /* Borda vermelha */
+        }
+
+        /* Estilo para botão primário */
+        button.btn-primary {
+            background-color: var(--primary); /* Cor de fundo */
+            color: white; /* Cor do texto */
+            font-size: 16px; /* Tamanho da fonte */
+            font-weight: 600; /* Peso da fonte */
+            padding: 12px 20px; /* Espaçamento interno */
+            border: none; /* Remove borda */
+            border-radius: 8px; /* Bordas arredondadas */
+            cursor: pointer; /* Cursor de ponteiro */
+            transition: background-color 0.3s; /* Transição suave */
+            margin-top: 8px; /* Espaçamento superior */
+            width: 100%; /* Largura total */
+        }
+
+        /* Efeito hover para botão primário */
+        button.btn-primary:hover {
+            background-color: #0056b3; /* Cor mais escura */
+        }
+
+        /* Estilo para área de resultados */
+        .result {
+            padding-top: 0px; /* Espaçamento superior */
+            font-size: 0.9em; /* Tamanho da fonte */
+            line-height: 1.4; /* Altura da linha */
+        }
+
+        /* Blocos dentro dos resultados */
+        .result .bloco {
+            margin-bottom: 10px; /* Espaçamento inferior */
+        }
+
+        /* Linha divisória */
+        .result hr {
+            border: none; /* Remove borda padrão */
+            border-top: 1px dashed var(--input-border); /* Linha tracejada */
+            margin: 10px 0; /* Espaçamento vertical */
+        }
+
+        /* Labels dentro dos resultados */
+        .result span.label {
+            font-weight: 600; /* Peso da fonte */
+            display: block; /* Exibe como bloco */
+            margin-bottom: 0px; /* Remove espaçamento inferior */
+            color: var(--text); /* Cor do texto */
+        }
+
+        /* Ajuste para labels no modo escuro */
+        body.dark .result span.label {
+            color: var(--dark-text); /* Cor do texto clara */
+        }
+
+        /* Destaque para texto dentro de labels */
+        .result span.label strong {
+            color: var(--primary); /* Cor azul */
+        }
+
+        /* Label especial para faturamento */
+        .result .bloco .label.faturamento {
+            font-size: 1em; /* Tamanho da fonte */
+            color: var(--text); /* Cor do texto */
+            font-weight: bold; /* Negrito */
+        }
+
+        /* Ajuste para label de faturamento no modo escuro */
+        body.dark .result .bloco .label.faturamento {
+            color: var(--dark-text); /* Cor do texto clara */
+        }
+
+        /* Opacidade para labels normais */
+        .result .bloco span.label:not(.faturamento) {
+            opacity: 0.90; /* Leve transparência */
+        }
+
+        /* Ajuste para blocos com labels destacadas */
+        .result .bloco:has(span.label strong) {
+            margin-top: 2px; /* Pequeno espaçamento */
+            margin-bottom: 0px; /* Remove espaçamento */
+        }
+
+        /* Ajuste para labels dentro de blocos destacados */
+        .result .bloco:has(span.label strong) span.label {
+            font-size: 0.85em; /* Tamanho menor */
+            opacity: 0.75; /* Mais transparente */
+            margin-bottom: 5px; /* Espaçamento inferior */
+        }
+
+        /* Ajuste para texto destacado */
+        .result .bloco:has(span.label strong) span.label strong {
+            font-size: 1em; /* Tamanho normal */
+        }
+
+        /* Borda de lucro na parte inferior */
+        .lucro-borda {
+            position: absolute; /* Posicionamento absoluto */
+            bottom: 0; /* Alinhado na base */
+            left: 0; /* Alinhado à esquerda */
+            width: 100%; /* Largura total */
+            background-color: var(--success); /* Cor de fundo verde */
+            color: white; /* Cor do texto */
+            text-align: center; /* Texto centralizado */
+            padding: 5px 0; /* Espaçamento vertical */
+            border-bottom-left-radius: 12px; /* Borda inferior esquerda */
+            border-bottom-right-radius: 12px; /* Borda inferior direita */
+            font-weight: bold; /* Texto em negrito */
+            font-size: 0.85em; /* Tamanho da fonte */
+        }
+
+        /* Cabeçalho de data */
+        .data-header {
+            background-color: var(--info-darker); /* Cor de fundo */
+            color: white; /* Cor do texto */
+            padding: 7px; /* Espaçamento interno */
+            border-radius: 4px 4px 0px 0px; /* Bordas arredondadas apenas no topo */
+            font-size: 1em; /* Tamanho da fonte */
+            font-weight: bold; /* Texto em negrito */
+            text-align: center; /* Texto centralizado */
+            margin-bottom: 0px; /* Remove espaçamento */
+            border: none; /* Remove borda */
+        }
+
+        /* Classe para esconder elementos */
+        .hidden {
+            display: none; /* Oculta o elemento */
+        }
+
+        /* Container de opções do card */
+        .card-options {
+            position: absolute; /* Posicionamento absoluto */
+            top: 10px; /* Distância do topo */
+            right: 10px; /* Distância da direita */
+            z-index: 100; /* Camada superior */
+        }
+
+        /* Botão de opções */
+        .options-btn {
+            background: none; /* Remove fundo */
+            border: none; /* Remove borda */
+            font-size: 20px; /* Tamanho da fonte */
+            line-height: 1; /* Altura da linha */
+            cursor: pointer; /* Cursor de ponteiro */
+            padding: 5px; /* Espaçamento interno */
+            color: var(--grey); /* Cor do ícone */
+        }
+
+        /* Ajuste para botão de opções no modo escuro */
+        body.dark .options-btn {
+            color: #aaa; /* Cor mais clara */
+        }
+
+        /* Menu de opções */
+        .options-menu {
+            position: absolute; /* Posicionamento absoluto */
+            top: 100%; /* Abaixo do botão */
+            right: 0; /* Alinhado à direita */
+            background-color: var(--card-bg); /* Cor de fundo */
+            border: 1px solid var(--input-border); /* Borda */
+            border-radius: 8px; /* Bordas arredondadas */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra */
+            z-index: 100; /* Camada superior */
+            overflow: hidden; /* Esconde conteúdo extra */
+            min-width: 120px; /* Largura mínima */
+        }
+
+        /* Ajuste para menu no modo escuro */
+        body.dark .options-menu {
+            background-color: var(--dark-card); /* Cor de fundo escura */
+            border-color: var(--dark-input-border); /* Cor da borda */
+        }
+
+        /* Itens do menu de opções */
+        .options-menu a {
+            display: block; /* Exibe como bloco */
+            padding: 8px 12px; /* Espaçamento interno */
+            text-decoration: none; /* Remove sublinhado */
+            color: var(--text); /* Cor do texto */
+            cursor: pointer; /* Cursor de ponteiro */
+            white-space: nowrap; /* Evita quebra de linha */
+            font-size: 0.9em; /* Tamanho da fonte */
+        }
+
+        /* Ajuste para itens no modo escuro */
+        body.dark .options-menu a {
+            color: var(--dark-text); /* Cor do texto clara */
+        }
+
+        /* Efeito hover nos itens do menu */
+        .options-menu a:hover {
+            background-color: var(--bg); /* Cor de fundo ao passar mouse */
+        }
+
+        /* Ajuste para hover no modo escuro */
+        body.dark .options-menu a:hover {
+            background-color: #4f4f4f; /* Cor mais clara */
+        }
+
+        /* Item de exclusão no menu */
+        .options-menu .delete-item {
+            color: var(--red); /* Cor vermelha */
+        }
+
+        /* Estilo para modo de edição */
+        .edit-view label {
+            font-size: 0.85em; /* Tamanho menor */
+            margin-bottom: 3px; /* Espaçamento reduzido */
+        }
+
+        /* Inputs no modo de edição */
+        .edit-view input {
+            padding: 7px; /* Espaçamento menor */
+            margin-bottom: 8px; /* Espaçamento reduzido */
+            font-size: 0.95em; /* Tamanho da fonte */
+        }
+
+        /* Container de ações de edição */
+        .edit-actions {
+            display: flex; /* Layout flexível */
+            gap: 8px; /* Espaço entre botões */
+            margin-top: 8px; /* Espaçamento superior */
+        }
+
+        /* Botões de ação de edição */
+        .edit-actions button {
+            flex: 1; /* Distribui espaço igualmente */
+            padding: 7px; /* Espaçamento interno */
+            font-size: 0.85em; /* Tamanho menor */
+            font-weight: bold; /* Texto em negrito */
+            border-radius: 6px; /* Bordas arredondadas */
+            border: none; /* Remove borda */
+            cursor: pointer; /* Cursor de ponteiro */
+        }
+
+        /* Botão de salvar */
+        .save-btn-card {
+            background-color: var(--success); /* Cor verde */
+            color: white; /* Texto branco */
+        }
+
+        /* Botão de cancelar */
+        .cancel-btn-card {
+            background-color: var(--grey); /* Cor cinza */
+            color: white; /* Texto branco */
+        }
+
+        /* Container do switch */
+        .switch-container {
+            display: flex; /* Layout flexível */
+            align-items: center; /* Alinhamento vertical */
+            margin-bottom: 16px; /* Espaçamento inferior */
+            gap: 10px; /* Espaço entre elementos */
+        }
+
+        /* Estilo do switch */
+        .switch {
+            position: relative; /* Posicionamento relativo */
+            display: inline-block; /* Exibe em linha */
+            width: 48px; /* Largura */
+            height: 27.2px; /* Altura */
+        }
+
+        /* Input do switch (escondido) */
+        .switch input {
+            opacity: 0; /* Invisível */
+            width: 0; /* Sem largura */
+            height: 0; /* Sem altura */
+        }
+
+        /* Estilo do slider do switch */
+        .slider {
+            position: absolute; /* Posicionamento absoluto */
+            cursor: pointer; /* Cursor de ponteiro */
+            top: 0; /* Alinhado ao topo */
+            left: 0; /* Alinhado à esquerda */
+            right: 0; /* Ocupa toda largura */
+            bottom: 0; /* Ocupa toda altura */
+            background-color: #ccc; /* Cor de fundo */
+            transition: 0.4s; /* Transição suave */
+            border-radius: 27.2px; /* Bordas arredondadas */
+        }
+
+        /* Bolinha do slider */
+        .slider:before {
+            position: absolute; /* Posicionamento absoluto */
+            content: ""; /* Conteúdo vazio */
+            height: 20.4px; /* Altura */
+            width: 20.4px; /* Largura */
+            left: 3.4px; /* Posição à esquerda */
+            bottom: 3.4px; /* Posição inferior */
+            background-color: white; /* Cor branca */
+            transition: 0.4s; /* Transição suave */
+            border-radius: 50%; /* Forma circular */
+        }
+
+        /* Estilo quando o switch está ativo */
+        input:checked + .slider {
+            background-color: var(--primary); /* Cor azul */
+        }
+
+        /* Efeito de foco */
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--primary); /* Sombra sutil */
+        }
+
+        /* Movimento da bolinha quando ativo */
+        input:checked + .slider:before {
+            transform: translateX(20.4px); /* Desliza para direita */
+        }
+
+        /* Grupo de campos de faturamento/KM (inicialmente recolhido) */
+        .faturamento-km-group {
+            overflow: hidden; /* Esconde conteúdo extra */
+            max-height: 0; /* Altura zero */
+            transition: max-height 0.3s ease-out; /* Animação de recolhimento */
+        }
+
+        /* Classe para mostrar o grupo */
+        .faturamento-km-group.show {
+            max-height: 200px; /* Altura máxima */
+            transition: max-height 0.3s ease-in; /* Animação de expansão */
+        }
+
+        /* Card de sumário */
+        .summary-card {
+            background-color: var(--card-bg); /* Cor de fundo */
+            border-radius: 12px; /* Bordas arredondadas */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Sombra sutil */
+            padding: 20px; /* Espaçamento interno */
+            margin-bottom: 20px; /* Espaçamento inferior */
+            text-align: center; /* Texto centralizado */
+            transition: background-color 0.3s; /* Transição suave */
+            border: 1px solid var(--info); /* Borda colorida */
+        }
+
+        /* Ajuste para card no modo escuro */
+        body.dark .summary-card {
+            background-color: var(--dark-card); /* Cor de fundo escura */
+        }
+
+        /* Título do sumário */
+        .summary-card h2 {
+            margin-top: 0; /* Remove margem superior */
+            color: var(--info); /* Cor do texto */
+            font-size: 1.4em; /* Tamanho da fonte */
+            margin-bottom: 15px; /* Espaçamento inferior */
+        }
+
+        /* Itens do sumário */
+        .summary-item {
+            display: flex; /* Layout flexível */
+            justify-content: space-between; /* Espaço entre elementos */
+            align-items: center; /* Alinhamento vertical */
+            padding: 8px 0; /* Espaçamento vertical */
+            border-bottom: 1px dashed var(--input-border); /* Linha divisória */
+            font-size: 1.1em; /* Tamanho da fonte */
+            font-weight: 500; /* Peso da fonte */
+        }
+
+        /* Remove borda do último item */
+        .summary-item:last-of-type {
+            border-bottom: none; /* Sem borda */
+        }
+
+        /* Primeiro span dentro do item (label) */
+        .summary-item span:first-child {
+            font-weight: 600; /* Texto em negrito */
+            display: flex; /* Layout flexível */
+            align-items: center; /* Alinhamento vertical */
+            gap: 8px; /* Espaço entre ícone e texto */
+        }
+
+        /* Segundo span dentro do item (valor) */
+        .summary-item span:last-child {
+            font-weight: bold; /* Texto em negrito */
+            color: var(--text); /* Cor do texto */
+        }
+
+        /* Ajuste para valor no modo escuro */
+        body.dark .summary-item span:last-child {
+            color: var(--dark-text); /* Cor do texto clara */
+        }
+
+        /* Item de lucro */
+        .summary-item.lucro span:last-child {
+            color: var(--success); /* Cor verde */
+        }
+
+        /* Item de gastos */
+        .summary-item.gastos span:last-child {
+            color: var(--red); /* Cor vermelha */
+        }
+
+        /* Container da barra de progresso de lucro */
+        .lucro-progress-container {
+            margin-top: 20px; /* Espaçamento superior */
+            text-align: left; /* Alinhamento à esquerda */
+        }
+
+        /* Texto acima da barra de progresso */
+        .lucro-progress-container p {
+            margin-bottom: 8px; /* Espaçamento inferior */
+            font-weight: 600; /* Texto em negrito */
+            display: flex; /* Layout flexível */
+            align-items: center; /* Alinhamento vertical */
+            gap: 8px; /* Espaço entre ícone e texto */
+        }
+
+        /* Container da barra de progresso */
+        .lucro-progress-bar-container {
+            width: 100%; /* Largura total */
+            background-color: var(--progress-bg); /* Cor de fundo */
+            border-radius: 10px; /* Bordas arredondadas */
+            height: 20px; /* Altura fixa */
+            overflow: hidden; /* Esconde conteúdo extra */
+        }
+
+        /* Ajuste para container no modo escuro */
+        body.dark .lucro-progress-bar-container {
+            background-color: #555; /* Cor de fundo mais escura */
+        }
+
+        /* Barra de progresso */
+        .lucro-progress-bar {
+            height: 100%; /* Altura total */
+            background-color: var(--success); /* Cor verde */
+            width: 0%; /* Inicia em zero */
+            border-radius: 10px; /* Bordas arredondadas */
+            transition: width 0.5s ease-out; /* Animação suave */
+            display: flex; /* Layout flexível */
+            align-items: center; /* Centraliza verticalmente */
+            justify-content: flex-end; /* Alinha texto à direita */
+            padding-right: 8px; /* Espaçamento interno */
+            box-sizing: border-box; /* Modelo de caixa */
+            color: white; /* Texto branco */
+            font-weight: bold; /* Negrito */
+            font-size: 0.9em; /* Tamanho da fonte */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Sombra no texto */
+        }
+
+        /* Barra quando passa de 100% */
+        .lucro-progress-bar.over-100 {
+            background-color: #00C851; /* Verde mais vibrante */
+        }
+
+        /* Botão de reset */
+        .reset-button {
+            background-color: var(--red); /* Cor vermelha */
+            color: white; /* Texto branco */
+            font-size: 14px; /* Tamanho da fonte */
+            padding: 8px 12px; /* Espaçamento interno */
+            border: none; /* Remove borda */
+            border-radius: 6px; /* Bordas arredondadas */
+            cursor: pointer; /* Cursor de ponteiro */
+            margin-top: 20px; /* Espaçamento superior */
+            margin-bottom: 20px; /* Espaçamento inferior */
+            width: 100%; /* Largura total */
+            box-sizing: border-box; /* Modelo de caixa */
+            transition: background-color 0.3s; /* Transição suave */
+        }
+
+        /* Efeito hover no botão de reset */
+        .reset-button:hover {
+            background-color: #c82333; /* Vermelho mais escuro */
+        }
+
+        /* Container do tipo de combustível */
+        .fuel-type-container {
+            display: flex; /* Layout flexível */
+            align-items: center; /* Alinhamento vertical */
+            margin-bottom: 16px; /* Espaçamento inferior */
+            background-color: var(--card-bg); /* Cor de fundo */
+            border-radius: 8px; /* Bordas arredondadas */
+            padding: 8px; /* Espaçamento interno */
+            border: 1px solid var(--input-border); /* Borda */
+        }
+        
+        /* Ajuste para container no modo escuro */
+        body.dark .fuel-type-container {
+            background-color: var(--dark-card); /* Cor de fundo escura */
+            border-color: var(--dark-input-border); /* Cor da borda */
+        }
+        
+        /* Label do tipo de combustível */
+        .fuel-type-label {
+            margin-right: 10px; /* Espaçamento à direita */
+            font-weight: 600; /* Texto em negrito */
+            color: var(--text); /* Cor do texto */
+        }
+        
+        /* Ajuste para label no modo escuro */
+        body.dark .fuel-type-label {
+            color: var(--dark-text); /* Cor do texto clara */
+        }
+        
+        /* Toggle de combustível */
+        .fuel-toggle {
+            display: flex; /* Layout flexível */
+            background-color: var(--progress-bg); /* Cor de fundo */
+            border-radius: 20px; /* Bordas arredondadas */
+            padding: 4px; /* Espaçamento interno */
+            position: relative; /* Posicionamento relativo */
+            cursor: pointer; /* Cursor de ponteiro */
+        }
+        
+        /* Ajuste para toggle no modo escuro */
+        body.dark .fuel-toggle {
+            background-color: #555; /* Cor de fundo mais escura */
+        }
+        
+        /* Opções do toggle */
+        .fuel-option {
+            padding: 6px 12px; /* Espaçamento interno */
+            z-index: 1; /* Camada superior */
+            transition: color 0.3s; /* Transição suave */
+            font-weight: 500; /* Peso da fonte */
+        }
+        
+        /* Opção ativa */
+        .fuel-option.active {
+            color: white; /* Texto branco */
+        }
+        
+        /* Slider do toggle */
+        .fuel-slider {
+            position: absolute; /* Posicionamento absoluto */
+            top: 4px; /* Distância do topo */
+            bottom: 4px; /* Distância da base */
+            width: calc(50% - 4px); /* Largura calculada */
+            background-color: var(--success); /* Cor verde */
+            border-radius: 16px; /* Bordas arredondadas */
+            transition: transform 0.3s; /* Animação suave */
+        }
+        
+        /* Posição do slider para gasolina */
+        .fuel-slider.gasolina {
+            transform: translateX(calc(100% + 4px)); /* Move para direita */
+            background-color: var(--info); /* Cor azul */
+        }
+        
+        /* Posição do slider para etanol */
+        .fuel-slider.etanol {
+            transform: translateX(0); /* Posição inicial */
+        }
+
+        /* Media queries para dispositivos móveis */
+        @media (max-width: 480px) {
+            /* Ajustes gerais */
+            body {
+                padding: 10px; /* Espaçamento menor */
+            }
+
+            /* Botão de tema escuro */
+            .toggle-dark {
+                top: 10px; /* Posição ajustada */
+                right: 10px; /* Posição ajustada */
+                padding: 4px 8px; /* Espaçamento menor */
+            }
+
+            /* Cards */
+            .card {
+                padding: 14px; /* Espaçamento menor */
+            }
+
+            /* Grupos de data */
+            .date-group .card {
+                margin-bottom: 0; /* Remove espaçamento */
+            }
+
+            /* Último card do grupo */
+            .date-group .card:last-of-type {
+                margin-bottom: 15px; /* Espaçamento menor */
+            }
+
+            /* Botões superiores */
+            .top-buttons button {
+                font-size: 14px; /* Tamanho menor */
+                padding: 8px 12px; /* Espaçamento menor */
+            }
+
+            /* Inputs */
+            input[type='number'],
+            input[type='date'] {
+                font-size: 14px; /* Tamanho menor */
+                padding: 10px; /* Espaçamento menor */
+            }
+
+            /* Botão primário */
+            button.btn-primary {
+                font-size: 14px; /* Tamanho menor */
+                padding: 10px 16px; /* Espaçamento menor */
+            }
+
+            /* Switch */
+            .switch {
+                width: 40px; /* Largura menor */
+                height: 22.4px; /* Altura menor */
+            }
+
+            /* Slider do switch */
+            .slider {
+                border-radius: 22.4px; /* Bordas arredondadas */
+            }
+
+            /* Bolinha do slider */
+            .slider:before {
+                height: 16.8px; /* Tamanho menor */
+                width: 16.8px; /* Tamanho menor */
+                left: 2.8px; /* Posição ajustada */
+                bottom: 2.8px; /* Posição ajustada */
+            }
+
+            /* Posição da bolinha quando ativo */
+            input:checked + .slider:before {
+                transform: translateX(16.8px); /* Movimento menor */
+            }
+
+            /* Card de sumário */
+            .summary-card {
+                padding: 15px; /* Espaçamento menor */
+            }
+
+            /* Título do sumário */
+            .summary-card h2 {
+                font-size: 1.2em; /* Tamanho menor */
+            }
+
+            /* Itens do sumário */
+            .summary-item {
+                padding: 6px 0; /* Espaçamento menor */
+                font-size: 0.9em; /* Tamanho menor */
+            }
+            
+            /* Opções de combustível */
+            .fuel-option {
+                padding: 6px 10px; /* Espaçamento menor */
+                font-size: 0.9em; /* Tamanho menor */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Container principal -->
+    <div class="container">
+        <!-- Título da aplicação -->
+        <h1>📊 Controle Combustível Uber</h1>
+        
+        <!-- Botões de navegação -->
+        <div class="top-buttons">
+            <button id="btnPainel" class="active">Painel</button>
+            <button id="btnRelatorio">Relatório</button>
+        </div>
+        
+        <!-- Botão para alternar tema escuro -->
+        <button class="toggle-dark">Modo Escuro</button>
+        
+        <!-- Seção do painel (visível por padrão) -->
+        <div id="painel">
+            <!-- Card do formulário principal -->
+            <div class="card">
+                <!-- Campo de data -->
+                <label for="data">Data</label>
+                <input type="date" id="data" />
+                
+                <!-- Seletor de tipo de combustível -->
+                <div class="fuel-type-container">
+                    <span class="fuel-type-label">Combustível:</span>
+                    <div class="fuel-toggle" id="fuelToggle">
+                        <div class="fuel-slider etanol" id="fuelSlider"></div>
+                        <div class="fuel-option active" data-value="etanol">Etanol</div>
+                        <div class="fuel-option" data-value="gasolina">Gasolina</div>
+                    </div>
+                </div>
+                
+                <!-- Campos do formulário -->
+                <label for="valorLitro">Valor do Litro (R$)</label>
+                <input type="number" id="valorLitro" step="0.01" />
+                
+                <label for="valorAbastecimento">Valor Abastecido (R$)</label>
+                <input type="number" id="valorAbastecimento" step="0.01" />
+                
+                <!-- Switch para mostrar campos adicionais -->
+                <div class="switch-container">
+                    <label for="toggleFaturamentoKm">Inserir Faturamento + KM</label>
+                    <label class="switch">
+                        <input type="checkbox" id="toggleFaturamentoKm" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <!-- Campos condicionais (inicialmente ocultos) -->
+                <div id="faturamentoKmGroup" class="faturamento-km-group">
+                    <label for="faturamento">Faturamento do Dia (R$)</label>
+                    <input type="number" id="faturamento" step="0.01" />
+                    
+                    <label for="kmRodado">KM Rodado no Dia</label>
+                    <input type="number" id="kmRodado" step="0.1" />
+                </div>
+                
+                <!-- Botão para registrar os dados -->
+                <button class="btn-primary">Registrar</button>
+            </div>
+            
+            <!-- Área para exibir os resultados -->
+            <div id="resultados"></div>
+            
+            <!-- Botão para resetar todos os dados -->
+            <button class="reset-button">Resetar Todos os Dados</button>
+        </div>
+        
+        <!-- Seção do relatório (inicialmente oculta) -->
+        <div id="chart-container" class="card hidden">
+            <!-- Card de sumário -->
+            <div class="summary-card">
+                <h2>Sumário Total 📈</h2>
+                
+                <!-- Itens do sumário -->
+                <div class="summary-item">
+                    <span>💰 Faturamento:</span>
+                    <span id="totalFaturamento">R$ 0,00</span>
+                </div>
+                
+                <div class="summary-item gastos">
+                    <span>⛽ Gastos com Combustível:</span>
+                    <span id="totalGastosCombustivel">R$ 0,00</span>
+                </div>
+                
+                <div class="summary-item lucro">
+                    <span>📊 Lucro Bruto:</span>
+                    <span id="totalLucro">R$ 0,00</span>
+                </div>
+                
+                <div class="summary-item">
+                    <span>🛣️ Média km/litro (Gasolina):</span>
+                    <span id="mediaKmLitroGasolina">0,00 km/L</span>
+                </div>
+                
+                <div class="summary-item">
+                    <span>🛣️ Média km/litro (Etanol):</span>
+                    <span id="mediaKmLitroEtanol">0,00 km/L</span>
+                </div>
+                
+                <!-- Barra de progresso do lucro -->
+                <div class="lucro-progress-container">
+                    <p>🎯 Lucro Bruto (Faturamento/Combustível):</p>
+                    <div class="lucro-progress-bar-container">
+                        <div class="lucro-progress-bar" id="lucroProgressBar">
+                            <span id="lucroProgressText">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Canvas para o gráfico -->
+            <canvas id="grafico"></canvas>
+        </div>
+    </div>
+
+    <!-- Script JavaScript -->
+    <script>
+        // Variáveis globais
+        let registros = JSON.parse(localStorage.getItem('registros') || '{}'); // Carrega registros do localStorage ou inicia objeto vazio
+        let chart; // Referência para o gráfico
+        const LUCRO_ALVO = 500; // Meta de lucro (não utilizada atualmente)
+        let fuelType = 'etanol'; // Tipo de combustível padrão
+
+        // Função para inicializar a aplicação
+        function initApp() {
+            migrarEstruturaDados(); // Migra estrutura de dados antiga para nova se necessário
+            setDefaultDate(); // Define a data padrão como hoje
+            setupEventListeners(); // Configura todos os event listeners
+            
+            // Restaura estado do toggle de faturamento/KM do localStorage
+            const toggleFaturamentoKm = document.getElementById('toggleFaturamentoKm');
+            toggleFaturamentoKm.checked = localStorage.getItem('faturamentoKmActive') === 'true';
+            toggleFaturamentoKmFields(); // Aplica o estado do toggle
+            
+            // Configura o toggle de combustível
+            const fuelOptions = document.querySelectorAll('.fuel-option');
+            fuelOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    fuelType = this.dataset.value; // Atualiza o tipo de combustível
+                    document.getElementById('fuelSlider').className = 'fuel-slider ' + fuelType; // Move o slider
+                    fuelOptions.forEach(opt => opt.classList.remove('active')); // Remove classe ativa de todos
+                    this.classList.add('active'); // Adiciona classe ativa ao selecionado
+                });
+            });
+            
+            renderizarResultados(); // Exibe os registros na tela
+            criarGrafico(); // Inicializa o gráfico
+            atualizarRelatorio(); // Atualiza o sumário
+            
+            // Aplica modo escuro se estava ativo
+            if (localStorage.getItem('dark') === 'true') {
+                document.body.classList.add('dark');
+            }
+        }
+
+        // Configura todos os event listeners da aplicação
+        function setupEventListeners() {
+            // Botão registrar - ação principal
+            document.querySelector('.btn-primary').addEventListener('click', handleMainAction);
+            
+            // Botão resetar - limpa todos os dados
+            document.querySelector('.reset-button').addEventListener('click', resetarDados);
+            
+            // Botão modo escuro - alterna tema
+            document.querySelector('.toggle-dark').addEventListener('click', toggleDark);
+            
+            // Botões de navegação entre painel e relatório
+            document.getElementById('btnPainel').addEventListener('click', mostrarPainel);
+            document.getElementById('btnRelatorio').addEventListener('click', mostrarRelatorio);
+            
+            // Toggle faturamento/KM - mostra/oculta campos adicionais
+            document.getElementById('toggleFaturamentoKm').addEventListener('change', toggleFaturamentoKmFields);
+            
+            // Event delegation para os cards (permite adicionar eventos dinamicamente)
+            document.getElementById('resultados').addEventListener('click', function(e) {
+                const card = e.target.closest('.card');
+                if (!card) return;
+                
+                const date = card.dataset.date;
+                const id = card.dataset.id;
+                
+                // Botão de opções (⋮)
+                if (e.target.matches('.options-btn')) {
+                    e.stopPropagation();
+                    const menu = card.querySelector('.options-menu');
+                    // Esconde outros menus abertos
+                    document.querySelectorAll('.options-menu').forEach(m => {
+                        if (m !== menu) m.classList.add('hidden');
+                    });
+                    menu.classList.toggle('hidden'); // Alterna visibilidade do menu
+                } 
+                // Item de edição
+                else if (e.target.matches('.edit-item')) {
+                    ativarModoEdicao(id, date);
+                } 
+                // Item de exclusão
+                else if (e.target.matches('.delete-item')) {
+                    excluirRegistro(date, id);
+                } 
+                // Botão de salvar edição
+                else if (e.target.matches('.save-btn-card')) {
+                    salvarEdicao(date, id);
+                } 
+                // Botão de cancelar edição
+                else if (e.target.matches('.cancel-btn-card')) {
+                    desativarModoEdicao(id);
+                } 
+                // Botão para adicionar faturamento/KM
+                else if (e.target.matches('.add-faturamento-btn')) {
+                    ativarModoEdicao(id, date, true);
+                }
+            });
+        }
+
+        // Migra estrutura de dados antiga para nova (compatibilidade)
+        function migrarEstruturaDados() {
+            let mudancaFeita = false;
+            const tempRegistros = {};
+            
+            // Percorre todos os registros existentes
+            Object.keys(registros).forEach(date => {
+                if (Array.isArray(registros[date])) {
+                    // Se já está no formato novo, mantém como está
+                    tempRegistros[date] = registros[date];
+                } else {
+                    // Se está no formato antigo, converte para o novo
+                    mudancaFeita = true;
+                    const oldRecord = registros[date];
+                    oldRecord.id = new Date(date).getTime(); // Adiciona ID baseado na data
+                    oldRecord.fuelType = 'etanol'; // Define tipo de combustível padrão
+                    tempRegistros[date] = [oldRecord]; // Cria array com o registro
+                }
+            });
+            
+            // Se houve mudanças, salva a nova estrutura
+            if (mudancaFeita) {
+                registros = tempRegistros;
+                localStorage.setItem('registros', JSON.stringify(registros));
+            }
+        }
+
+        // Define a data padrão como a data atual
+        function setDefaultDate() {
+            const inputData = document.getElementById('data');
+            if (!inputData.value) {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                inputData.value = `${year}-${month}-${day}`;
+            }
+        }
+
+        // Alterna entre temas claro e escuro
+        function toggleDark() {
+            document.body.classList.toggle('dark'); // Alterna classe no body
+            localStorage.setItem('dark', document.body.classList.contains('dark')); // Salva preferência
+        }
+
+        // Mostra a seção do painel e esconde o relatório
+        function mostrarPainel() {
+            document.getElementById('painel').classList.remove('hidden');
+            document.getElementById('chart-container').classList.add('hidden');
+            document.getElementById('btnPainel').classList.add('active');
+            document.getElementById('btnRelatorio').classList.remove('active');
+            renderizarResultados(); // Atualiza a exibição
+            resetForm(); // Reseta o formulário
+        }
+
+        // Mostra a seção do relatório e esconde o painel
+        function mostrarRelatorio() {
+            document.getElementById('painel').classList.add('hidden');
+            document.getElementById('chart-container').classList.remove('hidden');
+            document.getElementById('btnRelatorio').classList.add('active');
+            document.getElementById('btnPainel').classList.remove('active');
+            atualizarGrafico(); // Atualiza o gráfico
+            atualizarRelatorio(); // Atualiza o sumário
+        }
+
+        // Formata a data para exibição (DD/MM/AAAA - Dia da semana)
+        function formatarData(dataISO) {
+            const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+            const [ano, mes, dia] = dataISO.split('-');
+            const dataObj = new Date(`${ano}-${mes}-${dia}T12:00:00`);
+            const ds = diasSemana[dataObj.getDay()];
+            return `${dia}/${mes}/${ano} - ${ds}`;
+        }
+
+        // Manipula a ação principal (registrar novo abastecimento)
+        function handleMainAction() {
+            if (!validarFormularioPrincipal()) return; // Valida antes de prosseguir
+            registrar(); // Registra os dados
+        }
+
+        // Registra um novo abastecimento
+        function registrar() {
+            const data = document.getElementById('data').value;
+            const novoRegistro = calcularValoresDesdeFormulario('main'); // Calcula valores
+            if (!novoRegistro) return; // Se validação falhou, retorna
+
+            novoRegistro.id = Date.now(); // Adiciona timestamp como ID
+            novoRegistro.editado = false; // Marca como não editado
+
+            // Cria array para a data se não existir
+            if (!registros[data]) {
+                registros[data] = [];
+            }
+            registros[data].push(novoRegistro); // Adiciona novo registro
+
+            salvarEAtualizarTudo(); // Salva e atualiza a interface
+            alert('Registro salvo com sucesso!'); // Feedback ao usuário
+            resetForm(); // Limpa o formulário
+        }
+
+        // Exclui um registro específico
+        function excluirRegistro(date, id) {
+            if (confirm('Tem certeza que deseja excluir este registro?')) {
+                const recordsDoDia = registros[date];
+                const indexParaExcluir = recordsDoDia.findIndex(rec => rec.id == id);
+
+                // Remove o registro se encontrado
+                if (indexParaExcluir > -1) {
+                    recordsDoDia.splice(indexParaExcluir, 1);
+                }
+                
+                // Remove a data se não houver mais registros
+                if (registros[date].length === 0) {
+                    delete registros[date];
+                }
+                
+                salvarEAtualizarTudo(); // Salva e atualiza a interface
+            }
+        }
+
+        // Salva as edições feitas em um registro existente
+        function salvarEdicao(date, id) {
+            // Obtém os novos valores do formulário de edição
+            const novosValores = calcularValoresDesdeFormulario('card', id);
+            if (!novosValores) return; // Se validação falhou, retorna
+
+            // Encontra o registro original
+            const registroParaAtualizar = registros[date].find(rec => rec.id == id);
+            
+            if (registroParaAtualizar) {
+                // Mescla os novos valores com o registro existente
+                Object.assign(registroParaAtualizar, novosValores);
+                registroParaAtualizar.editado = true; // Marca como editado
+                salvarEAtualizarTudo(); // Salva e atualiza a interface
+            }
+            
+            desativarModoEdicao(id); // Sai do modo de edição
+        }
+
+        // Ativa o modo de edição para um registro
+        function ativarModoEdicao(id, date, forceFaturamentoKm = false) {
+            const card = document.querySelector(`.card[data-id="${id}"]`);
+            if (!card) return;
+
+            // Encontra o registro
+            const record = registros[date].find(r => r.id == id);
+            if (!record) return;
+
+            // Mostra formulário de edição e esconde visualização normal
+            card.querySelector('.display-view').classList.add('hidden');
+            card.querySelector('.edit-view').classList.remove('hidden');
+            card.querySelector('.options-menu').classList.add('hidden'); // Esconde menu de opções
+
+            // Preenche os campos do formulário com os valores atuais
+            card.querySelector(`#${id}-valorLitro`).value = record.vl;
+            card.querySelector(`#${id}-valorAbastecimento`).value = record.va;
+
+            // Campos de faturamento e KM
+            const faturamentoInput = card.querySelector(`#${id}-faturamento`);
+            const kmInput = card.querySelector(`#${id}-kmRodado`);
+
+            // Preenche faturamento se existir ou se for forçado
+            if (record.fat !== null && !isNaN(parseFloat(record.fat))) {
+                faturamentoInput.value = record.fat;
+            } else if (forceFaturamentoKm) {
+                faturamentoInput.value = '';
+            } else {
+                faturamentoInput.value = '';
+            }
+
+            // Preenche KM se existir ou se for forçado
+            if (record.km !== null && !isNaN(parseFloat(record.km))) {
+                kmInput.value = record.km;
+            } else if (forceFaturamentoKm) {
+                kmInput.value = '';
+            } else {
+                kmInput.value = '';
+            }
+        }
+
+        // Desativa o modo de edição
+        function desativarModoEdicao(id) {
+            const card = document.querySelector(`.card[data-id="${id}"]`);
+            if (card) {
+                // Mostra visualização normal e esconde formulário de edição
+                card.querySelector('.display-view').classList.remove('hidden');
+                card.querySelector('.edit-view').classList.add('hidden');
+                // Remove marcação de campos inválidos
+                card.querySelectorAll('input').forEach(input => input.classList.remove('invalid'));
+            }
+        }
+
+        // Alterna a visibilidade dos campos de faturamento e KM
+        function toggleFaturamentoKmFields() {
+            const faturamentoKmGroup = document.getElementById('faturamentoKmGroup');
+            const toggleFaturamentoKm = document.getElementById('toggleFaturamentoKm');
+            
+            if (toggleFaturamentoKm.checked) {
+                faturamentoKmGroup.classList.add('show'); // Mostra campos
+                localStorage.setItem('faturamentoKmActive', 'true'); // Salva preferência
+            } else {
+                faturamentoKmGroup.classList.remove('show'); // Esconde campos
+                localStorage.setItem('faturamentoKmActive', 'false'); // Salva preferência
+                // Limpa e remove validação dos campos
+                ['faturamento', 'kmRodado'].forEach(id => {
+                    document.getElementById(id).value = '';
+                    document.getElementById(id).classList.remove('invalid');
+                });
+            }
+        }
+
+        // Reseta o formulário principal
+        function resetForm() {
+            // Limpa todos os campos
+            ['valorLitro', 'valorAbastecimento', 'faturamento', 'kmRodado'].forEach((id) => {
+                document.getElementById(id).value = '';
+                document.getElementById(id).classList.remove('invalid');
+            });
+            
+            setDefaultDate(); // Define data padrão
+            document.getElementById('toggleFaturamentoKm').checked = false; // Desmarca toggle
+            toggleFaturamentoKmFields(); // Aplica estado do toggle
+            
+            // Reseta seletor de combustível para etanol
+            fuelType = 'etanol';
+            const fuelSlider = document.getElementById('fuelSlider');
+            fuelSlider.className = 'fuel-slider etanol';
+            document.querySelectorAll('.fuel-option').forEach(opt => {
+                opt.classList.remove('active');
+                if (opt.dataset.value === 'etanol') {
+                    opt.classList.add('active');
+                }
+            });
+        }
+
+        // Valida o formulário principal
+        function validarFormularioPrincipal() {
+            let ok = true;
+            const camposBase = ['data', 'valorLitro', 'valorAbastecimento'];
+            const camposOpcionais = ['faturamento', 'kmRodado'];
+
+            // Valida campos obrigatórios
+            camposBase.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el.value || parseFloat(el.value) <= 0 || isNaN(parseFloat(el.value))) { 
+                    ok = false; 
+                    el.classList.add('invalid'); 
+                } else { 
+                    el.classList.remove('invalid'); 
+                }
+            });
+            
+            // Valida campos opcionais se toggle estiver ativo
+            if (document.getElementById('toggleFaturamentoKm').checked) {
+                camposOpcionais.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el.value || parseFloat(el.value) < 0 || isNaN(parseFloat(el.value))) { 
+                        ok = false; 
+                        el.classList.add('invalid'); 
+                    } else { 
+                        el.classList.remove('invalid'); 
+                    }
+                });
+            }
+            
+            return ok;
+        }
+
+        // Valida o formulário de edição no card
+        function validarFormularioCard(idPrefix) {
+            let ok = true;
+            const vlEl = document.getElementById(`${idPrefix}valorLitro`);
+            const vaEl = document.getElementById(`${idPrefix}valorAbastecimento`);
+            const fatEl = document.getElementById(`${idPrefix}faturamento`);
+            const kmEl = document.getElementById(`${idPrefix}kmRodado`);
+
+            // Valida campos obrigatórios
+            if (!vlEl.value || parseFloat(vlEl.value) <= 0 || isNaN(parseFloat(vlEl.value))) { 
+                ok = false; 
+                vlEl.classList.add('invalid'); 
+            } else { 
+                vlEl.classList.remove('invalid'); 
+            }
+            
+            if (!vaEl.value || parseFloat(vaEl.value) <= 0 || isNaN(parseFloat(vaEl.value))) { 
+                ok = false; 
+                vaEl.classList.add('invalid'); 
+            } else { 
+                vaEl.classList.remove('invalid'); 
+            }
+
+            // Valida campos opcionais (podem estar vazios)
+            if (fatEl.value.trim() !== '' && (parseFloat(fatEl.value) < 0 || isNaN(parseFloat(fatEl.value)))) { 
+                ok = false; 
+                fatEl.classList.add('invalid'); 
+            } else { 
+                fatEl.classList.remove('invalid'); 
+            }
+            
+            if (kmEl.value.trim() !== '' && (parseFloat(kmEl.value) < 0 || isNaN(parseFloat(kmEl.value)))) { 
+                ok = false; 
+                kmEl.classList.add('invalid'); 
+            } else { 
+                kmEl.classList.remove('invalid'); 
+            }
+
+            if (!ok) alert("Por favor, preencha todos os campos obrigatórios corretamente.");
+            return ok;
+        }
+
+        // Calcula valores com base nos inputs do formulário
+        function calcularValoresDesdeFormulario(type, id = '') {
+            const prefix = type === 'main' ? '' : `${id}-`; // Prefixo para IDs
+
+            let vl, va, fat, km;
+
+            if (type === 'main') {
+                // Para formulário principal
+                if (!validarFormularioPrincipal()) return null; // Valida antes
+                vl = parseFloat(document.getElementById(`${prefix}valorLitro`).value);
+                va = parseFloat(document.getElementById(`${prefix}valorAbastecimento`).value);
+                fat = document.getElementById('toggleFaturamentoKm').checked ? 
+                    parseFloat(document.getElementById(`${prefix}faturamento`).value) : null;
+                km = document.getElementById('toggleFaturamentoKm').checked ? 
+                    parseFloat(document.getElementById(`${prefix}kmRodado`).value) : null;
+            } else { 
+                // Para formulário de edição no card
+                if (!validarFormularioCard(prefix)) return null; // Valida antes
+                vl = parseFloat(document.getElementById(`${prefix}valorLitro`).value);
+                va = parseFloat(document.getElementById(`${prefix}valorAbastecimento`).value);
+                fat = document.getElementById(`${prefix}faturamento`).value.trim() !== '' ? 
+                    parseFloat(document.getElementById(`${prefix}faturamento`).value) : null;
+                km = document.getElementById(`${prefix}kmRodado`).value.trim() !== '' ? 
+                    parseFloat(document.getElementById(`${prefix}kmRodado`).value) : null;
+            }
+
+            // Realiza os cálculos
+            const litros = va / vl;
+            const lucro = (fat !== null && !isNaN(fat)) ? (fat - va) : null;
+            const vkm = (fat !== null && !isNaN(fat) && km !== null && !isNaN(km) && km > 0) ? (fat / km) : null;
+            const fpl = (fat !== null && !isNaN(fat) && litros > 0) ? (fat / litros) : null;
+            
+            // Cria objeto com os valores calculados
+            const newValues = {
+                vl: vl,
+                va: va,
+                fat: fat,
+                km: km,
+                litros: litros,
+                lucro: lucro,
+                vkm: vkm,
+                fpl: fpl,
+            };
+
+            // Adiciona tipo de combustível apenas para novos registros
+            if (type === 'main') {
+                newValues.fuelType = fuelType;
+            }
+
+            return newValues;
+        }
+
+        // Salva os registros e atualiza a interface
+        function salvarEAtualizarTudo() {
+            localStorage.setItem('registros', JSON.stringify(registros)); // Salva no localStorage
+            renderizarResultados(); // Atualiza a lista de registros
+            atualizarGrafico(); // Atualiza o gráfico
+            atualizarRelatorio(); // Atualiza o sumário
+        }
+
+        // Renderiza os resultados na tela
+        function renderizarResultados() {
+            const out = document.getElementById('resultados');
+            out.innerHTML = '';
+            
+            // Ordena datas do mais recente para o mais antigo
+            const sortedDates = Object.keys(registros).sort((a, b) => new Date(b) - new Date(a));
+
+            // Mensagem se não houver registros
+            if (sortedDates.length === 0) {
+                out.innerHTML = '<p style="text-align: center; margin-top: 30px; opacity: 0.7;">Nenhum registro encontrado. Comece adicionando um novo!</p>';
+                return;
+            }
+
+            // Para cada data, cria um grupo
+            sortedDates.forEach(d => {
+                const header = `<div class="data-header">${formatarData(d)}</div>`;
+                const groupContainer = document.createElement('div');
+                groupContainer.className = 'date-group';
+                groupContainer.innerHTML = header;
+
+                // Para cada registro na data, cria um card
+                registros[d].forEach(r => {
+                    // Garante que os valores sejam numéricos
+                    const fat = parseFloat(r.fat);
+                    const km = parseFloat(r.km);
+                    const va = parseFloat(r.va);
+                    const litros = parseFloat(r.litros);
+                    const vl = parseFloat(r.vl);
+                    const vkm = parseFloat(r.vkm);
+                    const fpl = parseFloat(r.fpl);
+                    const lucro = parseFloat(r.lucro);
+
+                    const hasFaturamento = !isNaN(fat); // Verifica se tem faturamento
+                    
+                    // HTML do card
+                    const cardHTML = `
+                        <div class="card" data-date="${d}" data-id="${r.id}">
+                            <!-- Menu de opções -->
+                            <div class="card-options">
+                                <button class="options-btn" data-id="${r.id}">⋮</button>
+                                <div class="options-menu hidden">
+                                    <a class="edit-item">✏️ Editar</a>
+                                    <a class="delete-item">❌ Excluir</a>
+                                </div>
+                            </div>
+                            
+                            <div class="result">
+                                <!-- Visualização normal -->
+                                <div class="display-view">
+                                    <div class="bloco">
+                                        ${hasFaturamento ? `
+                                        <span class="label faturamento">💰 Faturamento: R$ ${fat.toFixed(2).replace('.', ',')}</span>
+                                        <span class="label">🛣️ KM Rodado: ${km.toFixed(1).replace('.', ',')} km</span>
+                                        ` : ''}
+                                    </div>
+                                    <hr>
+                                    <div class="bloco">
+                                        <span class="label">⛽ Abastecimento: R$ ${va.toFixed(2).replace('.', ',')}</span>
+                                        <span class="label">⛽ Tipo: ${r.fuelType === 'gasolina' ? 'Gasolina' : 'Etanol'}</span>
+                                        <span class="label">💧 Litros: ${litros.toFixed(2).replace('.', ',')} L</span>
+                                        <span class="label">🛢️ Valor litro: R$ ${vl.toFixed(2).replace('.', ',')}</span>
+                                    </div>
+                                    
+                                    ${hasFaturamento ? `
+                                    <hr>
+                                    <div class="bloco">
+                                        <span class="label"><strong>MÉDIAS:</strong></span>
+                                        <span class="label">🚗 R$/KM: R$ ${vkm.toFixed(2).replace('.', ',')}</span>
+                                        <span class="label">📊 R$/Litro: R$ ${fpl.toFixed(2).replace('.', ',')}</span>
+                                    </div>
+                                    ` : ''}
+                                    ${r.editado ? '<span class="edited" style="display: block; text-align: right; margin-top: 10px; font-size: 0.8em; opacity: 0.7;">(editado)</span>' : ''}
+                                </div>
+                                
+                                <!-- Formulário de edição (inicialmente oculto) -->
+                                <div class="edit-view hidden">
+                                    <label for="${r.id}-valorLitro">Valor Litro (R$)</label>
+                                    <input type="number" step="0.01" id="${r.id}-valorLitro" value="${r.vl}">
+                                    
+                                    <label for="${r.id}-valorAbastecimento">Valor Abastecido (R$)</label>
+                                    <input type="number" step="0.01" id="${r.id}-valorAbastecimento" value="${r.va}">
+                                    
+                                    <label for="${r.id}-faturamento">Faturamento (R$)</label>
+                                    <input type="number" step="0.01" id="${r.id}-faturamento" value="${hasFaturamento ? fat : ''}" placeholder="Opcional">
+                                    
+                                    <label for="${r.id}-kmRodado">KM Rodado</label>
+                                    <input type="number" step="0.1" id="${r.id}-kmRodado" value="${hasFaturamento ? km : ''}" placeholder="Opcional">
+                                    
+                                    <!-- Botões de ação -->
+                                    <div class="edit-actions">
+                                        <button class="save-btn-card">Salvar</button>
+                                        <button class="cancel-btn-card">Cancelar</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Mostra lucro ou botão para adicionar faturamento -->
+                            ${!isNaN(lucro) ? `<div class="lucro-borda">Lucro: R$ ${lucro.toFixed(2).replace('.', ',')}</div>` :
+                                    `<button class="btn-primary add-faturamento-btn" style="margin-top: 15px; width: auto; display: block; margin-left: auto; margin-right: auto;">Adicionar Faturamento+KM</button>`
+                                }
+                        </div>`;
+                    
+                    groupContainer.innerHTML += cardHTML;
+                });
+                out.appendChild(groupContainer);
+            });
+        }
+
+        // Cria o gráfico usando Chart.js
+        function criarGrafico() {
+            const ctx = document.getElementById('grafico').getContext('2d');
+            if (chart) chart.destroy(); // Destrói gráfico existente
+            
+            // Configura novo gráfico
+            chart = new Chart(ctx, {
+                type: 'bar', // Tipo de gráfico (barras)
+                data: {
+                    labels: [], // Datas (serão preenchidas)
+                    datasets: [
+                        { 
+                            label: 'Lucro', 
+                            backgroundColor: 'var(--success)', // Cor verde
+                            data: [] // Valores (serão preenchidos)
+                        },
+                        { 
+                            label: 'Faturamento', 
+                            backgroundColor: 'var(--primary)', // Cor azul
+                            data: [] // Valores (serão preenchidos)
+                        },
+                    ]
+                },
+                options: { 
+                    responsive: true, // Gráfico responsivo
+                    scales: { 
+                        y: { 
+                            beginAtZero: true // Eixo Y começa em zero
+                        } 
+                    } 
+                },
+            });
+            
+            atualizarGrafico(); // Atualiza dados do gráfico
+        }
+
+        // Atualiza os dados do gráfico
+        function atualizarGrafico() {
+            if (!chart) return;
+            
+            // Agrupa dados por data
+            const datasAgrupadas = {};
+            Object.keys(registros).sort((a, b) => new Date(a) - new Date(b)).forEach(d => {
+                datasAgrupadas[d] = {
+                    lucro: 0,
+                    faturamento: 0
+                };
+                
+                // Soma valores para cada data
+                registros[d].forEach(r => {
+                    datasAgrupadas[d].lucro += parseFloat(r.lucro || 0);
+                    datasAgrupadas[d].faturamento += parseFloat(r.fat || 0);
+                });
+            });
+
+            const datas = Object.keys(datasAgrupadas);
+            
+            // Atualiza dados do gráfico
+            chart.data.labels = datas.map(d => d.substring(5).replace('-', '/')); // Formata datas (MM/DD)
+            chart.data.datasets[0].data = datas.map(d => datasAgrupadas[d].lucro);
+            chart.data.datasets[1].data = datas.map(d => datasAgrupadas[d].faturamento);
+            chart.update(); // Atualiza o gráfico
+        }
+
+        // Atualiza o relatório/sumário
+        function atualizarRelatorio() {
+            // Variáveis para cálculos totais
+            let totalLucro = 0, totalFaturamento = 0, totalGastos = 0, totalKm = 0;
+            let totalLitrosGasolina = 0, totalKmGasolina = 0;
+            let totalLitrosEtanol = 0, totalKmEtanol = 0;
+
+            // Percorre todos os registros para calcular totais
+            Object.values(registros).forEach(arrayDeRegistros => {
+                arrayDeRegistros.forEach(r => {
+                    totalLucro += parseFloat(r.lucro || 0);
+                    totalFaturamento += parseFloat(r.fat || 0);
+                    totalGastos += parseFloat(r.va || 0);
+                    totalKm += parseFloat(r.km || 0);
+                    
+                    // Separa por tipo de combustível para cálculo de médias
+                    if (r.fuelType === 'gasolina') {
+                        totalLitrosGasolina += parseFloat(r.litros || 0);
+                        totalKmGasolina += parseFloat(r.km || 0);
+                    } else {
+                        totalLitrosEtanol += parseFloat(r.litros || 0);
+                        totalKmEtanol += parseFloat(r.km || 0);
+                    }
+                });
+            });
+
+            // Atualiza valores no sumário
+            document.getElementById('totalFaturamento').textContent = `R$ ${totalFaturamento.toFixed(2).replace('.', ',')}`;
+            document.getElementById('totalGastosCombustivel').textContent = `R$ ${totalGastos.toFixed(2).replace('.', ',')}`;
+            document.getElementById('totalLucro').textContent = `R$ ${totalLucro.toFixed(2).replace('.', ',')}`;
+            
+            // Calcula médias de km/litro
+            const mediaKmLitroGasolina = totalLitrosGasolina > 0 ? 
+                (totalKmGasolina / totalLitrosGasolina).toFixed(2).replace('.', ',') : '0,00';
+            const mediaKmLitroEtanol = totalLitrosEtanol > 0 ? 
+                (totalKmEtanol / totalLitrosEtanol).toFixed(2).replace('.', ',') : '0,00';
+
+            document.getElementById('mediaKmLitroGasolina').textContent = `${mediaKmLitroGasolina} km/L`;
+            document.getElementById('mediaKmLitroEtanol').textContent = `${mediaKmLitroEtanol} km/L`;
+
+            // Calcula percentual de lucro bruto
+            const percentualLucroBruto = totalFaturamento > 0 ? 
+                ((totalFaturamento - totalGastos) / totalFaturamento) * 100 : 0;
+            const percentualDisplay = Math.min(percentualLucroBruto, 100); // Limita a 100%
+            
+            // Atualiza barra de progresso
+            const lucroProgressBar = document.getElementById('lucroProgressBar');
+            lucroProgressBar.style.width = `${percentualDisplay}%`;
+            document.getElementById('lucroProgressText').textContent = `${percentualLucroBruto.toFixed(1)}%`;
+            lucroProgressBar.classList.toggle('over-100', percentualLucroBruto >= 100); // Muda cor se >= 100%
+        }
+
+        // Reseta todos os dados da aplicação
+        function resetarDados() {
+            if (confirm('Tem certeza que deseja apagar TODOS os registros? Esta ação não pode ser desfeita.')) {
+                localStorage.clear(); // Limpa localStorage
+                registros = {}; // Limpa variável
+                salvarEAtualizarTudo(); // Atualiza interface
+                resetForm(); // Reseta formulário
+                alert('Todos os dados foram resetados com sucesso!'); // Feedback
+            }
+        }
+
+        // Inicializa a aplicação quando o DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
